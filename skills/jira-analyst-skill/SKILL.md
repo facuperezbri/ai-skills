@@ -1,6 +1,12 @@
 ---
 name: jira-analyst-skill
-description: Analiza tickets de Jira y produce propuestas funcionales o técnicas. Usar cuando el usuario pide analizar un ticket (ej. MDCS-456, JIRA-123), entender un problema, diseñar soluciones, o analizar logs/interfaces CMM. Escala por Jira, Confluence y código antes de preguntar. Genera un archivo markdown con el análisis.
+description: >
+  Usa esta skill cuando el usuario mencione un ticket de Jira (ej. MDCS-456, PROJ-123)
+  o pida analizar un problema, entender un flujo, diseñar una solución, o revisar
+  logs/payloads CMM. Produce análisis funcionales (reglas de negocio, flujos,
+  dependencias) o técnicos (archivos a tocar, plan de implementación) según el contexto.
+  Aplica incluso si el usuario no dice "Jira" explícitamente — basta con que haya
+  un ticket key, un problema de negocio, o una interfaz CMM para analizar.
 license: MIT
 compatibility: Requires mcp-atlassian MCP server configured with Jira and Confluence credentials. Run setup/mcp-setup.sh to configure.
 metadata:
