@@ -1,12 +1,6 @@
 ---
 name: jira-analyst-skill
-description: >
-  Usa esta skill cuando el usuario mencione un ticket de Jira (ej. MDCS-456, PROJ-123)
-  o pida analizar un problema, entender un flujo, diseñar una solución, o revisar
-  logs/payloads CMM. Produce análisis funcionales (reglas de negocio, flujos,
-  dependencias) o técnicos (archivos a tocar, plan de implementación) según el contexto.
-  Aplica incluso si el usuario no dice "Jira" explícitamente — basta con que haya
-  un ticket key, un problema de negocio, o una interfaz CMM para analizar.
+description: Analiza tickets de Jira y produce propuestas funcionales o técnicas. Usar cuando el usuario pide analizar un ticket (ej. MDCS-456, JIRA-123), entender un problema, diseñar soluciones, o analizar logs/interfaces CMM. Escala por Jira, Confluence y código antes de preguntar. Genera un archivo markdown con el análisis.
 license: MIT
 compatibility: Requires mcp-atlassian MCP server configured with Jira and Confluence credentials. Run setup/mcp-setup.sh to configure.
 metadata:
@@ -62,7 +56,6 @@ Detectar qué herramientas están disponibles:
 1. **Código local**: Verificar si existe `src/` en el directorio de trabajo (usar Glob)
    - Si existe → usar filesystem local (Glob/Grep/Read). NO usar Bitbucket MCP.
    - Si NO existe → usar Bitbucket MCP si está disponible (`bitbucket_browse`, `bitbucket_read`)
-2. **Trace viewer**: URL interna `http://172.12.24.172:8888/app/pages/index.html` — accesible si el usuario tiene VPN activa. Permite buscar traces CMM por número.
 
 ---
 
@@ -87,11 +80,8 @@ Si se detectan artefactos:
 ### Número de trace
 
 Si el usuario menciona un número de trace (ej. "trace 123456", "trace number: ABC-789"):
-1. Intentar acceder al trace viewer vía WebFetch: `http://172.12.24.172:8888/app/pages/index.html`
-2. Si el trace viewer requiere interacción (formulario de búsqueda), indicar al usuario:
-   - "Necesito que busques el trace [NUMERO] en el trace viewer y pegues los request/response CMM aquí"
-   - Explicar qué buscar: los bloques de CMM request y CMM response relevantes al problema
-3. Si se puede leer directamente vía WebFetch, parsear los resultados SOAP/XML
+1. Indicar al usuario que busque el trace en su trace viewer y pegue directamente los bloques de request y response CMM (SOAP/XML) en el chat.
+2. Explicar qué buscar: los bloques de CMM request y CMM response relevantes al problema.
 
 ---
 
@@ -203,7 +193,7 @@ Si tras los niveles anteriores el umbral no se alcanza, formular 3-5 preguntas d
 **Si el problema involucra CMM y no hay artefactos**, preguntar específicamente:
 - "¿Tenés el número de trace de la transacción que falla?"
 - "¿Podés pegar el request y response CMM (SOAP/XML) directamente acá?"
-- "¿Podés buscar el trace en el trace viewer y pegar los resultados?"
+- "¿Podés buscar el trace en tu trace viewer y pegar los request/response CMM directamente acá?"
 
 Esperar respuestas del usuario. Tras recibirlas, reevaluar.
 
@@ -389,7 +379,7 @@ Para dependencias externas usar formato:
 - Preguntas concretas o artefactos que destrabarían el análisis
 
 ## Quién podría proveerlo
-- PO, QA, equipo backend, logs/APM, Confluence, trace viewer, etc.
+- PO, QA, equipo backend, logs/APM, Confluence, etc.
 
 ## Próximo paso recomendado
 - Qué obtener y proveer antes de solicitar nuevo análisis
@@ -486,7 +476,6 @@ Cuando el usuario pega artefactos CMM (SOAP/XML, JSON, logs), aplicar este anál
 - Código: <archivos inspeccionados> (si aplica)
 - Bitbucket: <archivos consultados> (si aplica)
 - Artefactos del usuario: <qué proporcionó> (si aplica)
-- Trace viewer: <trace consultado> (si aplica)
 ```
 
 Crear el directorio de salida si no existe antes de escribir el archivo.
@@ -505,13 +494,6 @@ Crear el directorio de salida si no existe antes de escribir el archivo.
 8. **Propuesta concisa** — 1-2 páginas salvo tickets muy complejos.
 9. **Terminología del proyecto** — usar nombres de features, servicios y flujos tal como aparecen en Jira, Confluence y el código.
 10. **Convenciones de código** (solo modo técnico) — branch naming `feature/JIRA-ID` o `fix/JIRA-ID`, commits en español.
-
-## Trace viewer
-
-- **URL**: `http://172.12.24.172:8888/app/pages/index.html`
-- **Acceso**: requiere VPN activa del usuario
-- **Uso**: buscar traces CMM por número, devuelve request/response en formato SOAP
-- **Integración**: intentar WebFetch primero. Si no funciona o requiere interacción, guiar al usuario para que busque y pegue los resultados.
 
 ## Referencias opcionales (NO se leen por defecto)
 
