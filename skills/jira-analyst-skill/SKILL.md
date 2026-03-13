@@ -1,6 +1,6 @@
 ---
 name: jira-analyst-skill
-description: Analiza tickets de Jira y produce propuestas funcionales o técnicas. Usar cuando el usuario pide analizar un ticket (ej. MDCS-456, JIRA-123), entender un problema, diseñar soluciones, o analizar logs/interfaces CMM. Escala por Jira, Confluence y código antes de preguntar. Genera un archivo markdown con el análisis.
+description: Analiza tickets de Jira y produce propuestas funcionales o técnicas. Usar cuando el usuario pide analizar un ticket (ej. MDCS-456, JIRA-123), entender un problema, diseñar soluciones, o analizar logs/interfaces CMM. Escala por Jira, Confluence y código antes de preguntar. Genera un archivo markdown con el análisis en ~/Desktop/Análisis/.
 license: MIT
 compatibility: Requires mcp-atlassian MCP server configured with Jira and Confluence credentials. Run setup/mcp-setup.sh to configure.
 metadata:
@@ -449,8 +449,7 @@ Cuando el usuario pega artefactos CMM (SOAP/XML, JSON, logs), aplicar este anál
 **Siempre se genera un archivo markdown** con el análisis completo, independientemente del modo.
 
 **Ruta del archivo:**
-- Si hay código local (existe `src/`) → `docs/ai/analysis/<JIRA-KEY>-analisis.md`
-- Si NO hay código local → `~/Desktop/Analysis/<JIRA-KEY>-analisis.md`
+- Siempre → `~/Desktop/Análisis/<JIRA-KEY>-analisis.md` (NO generar archivos dentro del repositorio)
 
 **Estructura del archivo:**
 
