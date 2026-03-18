@@ -1,6 +1,6 @@
 ---
 name: jira-analyst-skill
-description: Analiza tickets de Jira y produce propuestas funcionales o técnicas. Usar cuando el usuario pide analizar un ticket (ej. MDCS-456, JIRA-123), entender un problema, diseñar soluciones, o analizar logs/interfaces CMM. Escala por Jira, Confluence y código antes de preguntar. Genera un archivo markdown con el análisis en ~/Desktop/Análisis/.
+description: Analyzes Jira tickets and produces functional or technical proposals. Use when the user asks to analyze a ticket (e.g. MDCS-456, JIRA-123), understand a problem, design solutions, or analyze CMM logs/interfaces. Escalates through Jira, Confluence, and code before asking. Generates a markdown analysis file in ~/Desktop/Análisis/. Always respond in Spanish.
 license: MIT
 compatibility: Requires mcp-atlassian MCP server configured with Jira and Confluence credentials. Run setup/mcp-setup.sh to configure.
 metadata:
@@ -10,9 +10,15 @@ metadata:
 
 # Jira Solution Designer
 
-Skill autocontenida para analizar tickets de Jira. Produce análisis funcionales (reglas de negocio, flujos, dependencias) o técnicos (archivos, código, implementación) según el contexto. Todo el conocimiento necesario está en este archivo.
+Self-contained skill for analyzing Jira tickets. Produces functional analysis (business rules, flows, dependencies) or technical analysis (files, code, implementation) depending on context. All required knowledge is in this file.
 
-## Disparadores
+## Response language
+
+**Always respond in Spanish**, regardless of the language used in the Jira ticket, Confluence, or code. All analysis output, questions, and proposals must be written in Spanish.
+
+---
+
+## Triggers
 
 - "Analiza el ticket MDCS-456"
 - "Dame posibles soluciones para JIRA-123"
@@ -20,231 +26,231 @@ Skill autocontenida para analizar tickets de Jira. Produce análisis funcionales
 - "Análisis funcional de JIRA-456"
 - "Analiza MDCS-123 con contexto de HU anteriores"
 - "Analiza el ticket con dependencias CMM"
-- *(usuario pega XML/SOAP/JSON/logs junto con un ticket key)*
+- *(user pastes XML/SOAP/JSON/logs alongside a ticket key)*
 
 ---
 
-## Detección de modo de análisis
+## Analysis mode detection
 
-Determinar el modo antes de comenzar:
+Determine the mode before starting:
 
-### Modo FUNCIONAL (default)
+### FUNCTIONAL mode (default)
 
-Usar cuando:
-- El ticket trata sobre reglas de negocio, flujos, requisitos, comportamiento CMM
-- El usuario no pide explícitamente cambios de código
-- El ticket involucra servicios backend/CMM sin código frontend asociado
-- El usuario pide "entender qué pasa" o "analizar el problema"
+Use when:
+- The ticket is about business rules, flows, requirements, CMM behavior
+- The user does not explicitly ask for code changes
+- The ticket involves backend/CMM services without associated frontend code
+- The user asks to "understand what's happening" or "analyze the problem"
 
-**Salida**: análisis de negocio, reglas, flujos, dependencias. NO incluye archivos candidatos ni plan de implementación.
+**Output**: business analysis, rules, flows, dependencies. Does NOT include candidate files or implementation plan.
 
-### Modo TECNICO
+### TECHNICAL mode
 
-Usar cuando:
-- El usuario pide explícitamente cambios de código, implementación, o solución técnica
-- El ticket es claramente de implementación frontend (UI, componentes, Redux)
-- El usuario dice "qué archivos hay que tocar", "cómo lo implemento", "dame la solución técnica"
+Use when:
+- The user explicitly asks for code changes, implementation, or technical solution
+- The ticket is clearly frontend implementation (UI, components, Redux)
+- The user says "what files need to be touched", "how do I implement it", "give me the technical solution"
 
-**Salida**: análisis funcional + archivos candidatos, enfoques, plan de implementación.
-
----
-
-## Detección de entorno
-
-Detectar qué herramientas están disponibles:
-
-1. **Código local**: Verificar si existe `src/` en el directorio de trabajo (usar Glob)
-   - Si existe → usar filesystem local (Glob/Grep/Read). NO usar Bitbucket MCP.
-   - Si NO existe → usar Bitbucket MCP si está disponible (`bitbucket_browse`, `bitbucket_read`)
+**Output**: functional analysis + candidate files, approaches, implementation plan.
 
 ---
 
-## Detección de artefactos proporcionados
+## Environment detection
 
-Antes de iniciar el flujo, revisar si el usuario incluyó artefactos en su mensaje:
+Detect which tools are available:
 
-### Artefactos inline (pegados en el chat)
-
-Detectar si el mensaje del usuario contiene:
-- **XML/SOAP**: tags `<soapenv:`, `<cmm:`, `<ns2:`, `<request>`, `<response>`, o cualquier XML estructurado
-- **JSON**: objetos `{...}` o arrays `[...]` con estructura de payload
-- **Logs**: líneas con timestamps, stack traces, mensajes de error, HTTP status codes
-- **Interfaces CMM**: definiciones de operaciones, campos, tipos de datos
-
-Si se detectan artefactos:
-1. Parsear e identificar qué tipo de artefacto es (request, response, error, interfaz)
-2. Extraer información clave: operación invocada, campos enviados/recibidos, códigos de error, mensajes CMM
-3. Incorporar al análisis como **evidencia concreta** (no hace falta buscarla en otra fuente)
-4. Si es un request+response, analizar: ¿el request está bien formado? ¿La response indica error? ¿Qué campos faltan o son inesperados?
-
-### Número de trace
-
-Si el usuario menciona un número de trace (ej. "trace 123456", "trace number: ABC-789"):
-1. Indicar al usuario que busque el trace en su trace viewer y pegue directamente los bloques de request y response CMM (SOAP/XML) en el chat.
-2. Explicar qué buscar: los bloques de CMM request y CMM response relevantes al problema.
+1. **Local code**: Check if `src/` exists in the working directory (use Glob)
+   - If it exists → use local filesystem (Glob/Grep/Read). Do NOT use Bitbucket MCP.
+   - If it does NOT exist → use Bitbucket MCP if available (`bitbucket_browse`, `bitbucket_read`)
 
 ---
 
-## Flujo de trabajo (orden estricto)
+## Provided artifacts detection
 
-### Paso 1: Obtener ticket de Jira
+Before starting the flow, check if the user included artifacts in their message:
 
-Llamar `jira_get_issue` con el key del issue. Campos: `summary,description,status,priority,assignee,labels,issuetype,created,updated,parent`. Usar `expand: "renderedFields"` si la descripción es HTML. Opcionalmente `comment_limit: 5` para comentarios recientes.
+### Inline artifacts (pasted in chat)
 
-### Paso 2: Evaluar completitud del contexto
+Detect if the user message contains:
+- **XML/SOAP**: tags `<soapenv:`, `<cmm:`, `<ns2:`, `<request>`, `<response>`, or any structured XML
+- **JSON**: objects `{...}` or arrays `[...]` with payload structure
+- **Logs**: lines with timestamps, stack traces, error messages, HTTP status codes
+- **CMM interfaces**: operation definitions, fields, data types
 
-Clasificar el ticket como:
+If artifacts are detected:
+1. Parse and identify the artifact type (request, response, error, interface)
+2. Extract key information: invoked operation, fields sent/received, error codes, CMM messages
+3. Incorporate into analysis as **concrete evidence** (no need to search for it elsewhere)
+4. If it's request+response, analyze: Is the request well-formed? Does the response indicate error? What fields are missing or unexpected?
 
-- **Claro** — tiene feature/flujo objetivo, comportamiento actual/esperado, y al menos un criterio de aceptación
-- **Parcial** — tiene algunos elementos pero no todos
-- **Insuficiente** — una línea o vago (ej. "Corregir simulador de préstamos")
+### Trace number
 
-**Umbral mínimo** (todos deben estar presentes para avanzar directo al Paso 4):
-- Feature, flujo o servicio objetivo
-- Comportamiento actual o problema
-- Comportamiento deseado o resultado de negocio
-- Al menos un criterio de aceptación o señal de éxito
+If the user mentions a trace number (e.g. "trace 123456", "trace number: ABC-789"):
+1. Ask the user to find the trace in their trace viewer and paste the CMM request and response blocks (SOAP/XML) directly in the chat.
+2. Explain what to look for: the CMM request and CMM response blocks relevant to the problem.
 
-**Nota**: Los artefactos proporcionados por el usuario (logs, payloads, interfaces) cuentan como evidencia para evaluar el umbral. Un ticket vago + logs detallados puede ser suficiente.
+---
 
-Si el ticket es **claro** → saltar al **Paso 4**.
-Si es **parcial** o **insuficiente** → continuar al **Paso 3**.
+## Workflow (strict order)
 
-### Paso 3: Escalamiento progresivo de contexto
+### Step 1: Get ticket from Jira
 
-Ejecutar los niveles en orden. Después de cada nivel, reevaluar el umbral mínimo. Si se alcanza → saltar al **Paso 4**. Si no → continuar al siguiente nivel.
+Call `jira_get_issue` with the issue key. Fields: `summary,description,status,priority,assignee,labels,issuetype,created,updated,parent`. Use `expand: "renderedFields"` if description is HTML. Optionally `comment_limit: 5` for recent comments.
 
-#### Nivel 1: Tickets relacionados en Jira
+### Step 2: Evaluate context completeness
 
-Buscar contexto funcional en tickets previos del mismo flujo.
+Classify the ticket as:
 
-**Búsquedas JQL (en orden de prioridad):**
+- **Clear** — has target feature/flow, current/expected behavior, and at least one acceptance criterion
+- **Partial** — has some elements but not all
+- **Insufficient** — one line or vague (e.g. "Fix loan simulator")
 
-1. **Mismo Epic/parent**: `parent = <PARENT_KEY>` o `"Epic Link" = <EPIC_KEY>`
-   - Campos: `summary,description,status,issuetype,resolution,updated,labels`
-   - Límite: 20 resultados
+**Minimum threshold** (all must be present to skip to Step 4):
+- Target feature, flow, or service
+- Current behavior or problem
+- Desired behavior or business outcome
+- At least one acceptance criterion or success signal
 
-2. **Mismos labels**: `labels IN (<LABELS>) AND project = <PROJECT> AND key != <KEY> ORDER BY updated DESC`
-   - Límite: 15 resultados
+**Note**: Artifacts provided by the user (logs, payloads, interfaces) count as evidence for threshold evaluation. A vague ticket + detailed logs can be sufficient.
 
-3. **Mismo feature/servicio por texto**: `project = <PROJECT> AND summary ~ "<TERMINO>" AND key != <KEY> AND status in (Done, Closed, Resolved) ORDER BY updated DESC`
-   - Límite: 10 resultados
+If the ticket is **clear** → skip to **Step 4**.
+If it is **partial** or **insufficient** → continue to **Step 3**.
 
-**Para cada ticket relevante, extraer:**
+### Step 3: Progressive context escalation
 
-| Campo | Qué buscar |
-|-------|-----------|
-| Regla de negocio | Requisito funcional que se desprende del ticket |
-| Cambio realizado | Resolución o implementación documentada |
-| Riesgo/restricción | Edge cases, limitaciones, "no hacer X" |
+Execute levels in order. After each level, re-evaluate the minimum threshold. If reached → skip to **Step 4**. If not → continue to the next level.
 
-→ Reevaluar umbral. Si alcanza → **Paso 4**.
+#### Level 1: Related tickets in Jira
 
-#### Nivel 2: Confluence
+Search for functional context in previous tickets from the same flow.
 
-Buscar documentación funcional del feature, servicio o Epic.
+**JQL searches (in priority order):**
 
-- `confluence_search` con términos: nombre del feature/servicio, nombre del Epic, términos clave del ticket
-- `confluence_get_page` para las páginas más relevantes (máximo 3)
-- Extraer: reglas de negocio, flujos documentados, especificaciones funcionales, interfaces CMM, diagramas
+1. **Same Epic/parent**: `parent = <PARENT_KEY>` or `"Epic Link" = <EPIC_KEY>`
+   - Fields: `summary,description,status,issuetype,resolution,updated,labels`
+   - Limit: 20 results
 
-→ Reevaluar umbral. Si alcanza → **Paso 4**.
+2. **Same labels**: `labels IN (<LABELS>) AND project = <PROJECT> AND key != <KEY> ORDER BY updated DESC`
+   - Limit: 15 results
 
-#### Nivel 3: Inspección de código (solo si modo TECNICO o si aporta contexto funcional)
+3. **Same feature/service by text**: `project = <PROJECT> AND summary ~ "<TERM>" AND key != <KEY> AND status in (Done, Closed, Resolved) ORDER BY updated DESC`
+   - Limit: 10 results
 
-**Solo ejecutar si:**
-- El modo es TECNICO, O
-- El código puede aportar contexto funcional (ej. entender validaciones, flujos, mapeo de campos)
+**For each relevant ticket, extract:**
 
-**Si hay código local:**
-- `Glob` para localizar archivos del feature: `src/features/<nombre-feature>/**/*`
-- `Grep` para buscar términos clave del ticket en el código
-- `Read` para inspeccionar archivos relevantes
+| Field | What to look for |
+|-------|------------------|
+| Business rule | Functional requirement inferred from the ticket |
+| Change made | Documented resolution or implementation |
+| Risk/restriction | Edge cases, limitations, "do not do X" |
 
-**Si hay Bitbucket disponible:**
-- `bitbucket_browse` para navegar la estructura
-- `bitbucket_read` para leer archivos relevantes
+→ Re-evaluate threshold. If reached → **Step 4**.
 
-**Extraer**: flujo actual, servicios API invocados, payloads, validaciones, mapeo de campos.
+#### Level 2: Confluence
 
-→ Reevaluar umbral. Si alcanza → **Paso 4**.
+Search for functional documentation of the feature, service, or Epic.
 
-#### Nivel 4: Preguntas al usuario
+- `confluence_search` with terms: feature/service name, Epic name, key ticket terms
+- `confluence_get_page` for the most relevant pages (max 3)
+- Extract: business rules, documented flows, functional specs, CMM interfaces, diagrams
 
-Si tras los niveles anteriores el umbral no se alcanza, formular 3-5 preguntas de alto valor.
+→ Re-evaluate threshold. If reached → **Step 4**.
 
-**Categorías priorizadas:**
-1. **Objetivo de negocio** — ¿Qué resultado se espera? ¿Quién se beneficia?
-2. **Comportamiento actual vs esperado** — ¿Qué pasa hoy? ¿Qué debería pasar?
-3. **Flujo afectado** — ¿Qué pantalla, servicio o proceso? ¿Qué ruta?
-4. **Criterios de aceptación** — ¿Cómo sabemos que el cambio es correcto?
-5. **Dependencias** — ¿Backend, API, servicio CMM, configuración?
+#### Level 3: Code inspection (only if TECHNICAL mode or if it adds functional context)
 
-**Ramas por tipo de ticket:**
+**Only execute if:**
+- The mode is TECHNICAL, OR
+- The code can add functional context (e.g. understand validations, flows, field mapping)
 
-| Tipo | Preguntas prioritarias |
-|------|----------------------|
-| Bug | Pasos de reproducción, frecuencia, mensajes de error, entorno, comportamiento correcto esperado |
-| UI | Pantalla/componente exacto, mockup/referencia visual, cambios de copy, antes/después |
-| Servicio/API | Fuente de verdad, payload request/response, manejo de errores, endpoint nuevo o existente |
-| CMM/Backend | Operación CMM, interfaz esperada, códigos de error, ¿tiene el trace number? |
-| Ticket vago | Intención de negocio, área funcional, definición de "terminado", quién tiene más detalles |
+**If local code exists:**
+- `Glob` to locate feature files: `src/features/<feature-name>/**/*`
+- `Grep` to search for key ticket terms in the code
+- `Read` to inspect relevant files
 
-**Si el problema involucra CMM y no hay artefactos**, preguntar específicamente:
+**If Bitbucket is available:**
+- `bitbucket_browse` to navigate the structure
+- `bitbucket_read` to read relevant files
+
+**Extract**: current flow, invoked API services, payloads, validations, field mapping.
+
+→ Re-evaluate threshold. If reached → **Step 4**.
+
+#### Level 4: Questions to the user
+
+If the threshold is not reached after the previous levels, formulate 3-5 high-value questions.
+
+**Prioritized categories:**
+1. **Business objective** — What outcome is expected? Who benefits?
+2. **Current vs expected behavior** — What happens today? What should happen?
+3. **Affected flow** — Which screen, service, or process? Which route?
+4. **Acceptance criteria** — How do we know the change is correct?
+5. **Dependencies** — Backend, API, CMM service, configuration?
+
+**Branches by ticket type:**
+
+| Type | Priority questions |
+|------|-------------------|
+| Bug | Reproduction steps, frequency, error messages, environment, expected correct behavior |
+| UI | Exact screen/component, mockup/visual reference, copy changes, before/after |
+| Service/API | Source of truth, request/response payload, error handling, new or existing endpoint |
+| CMM/Backend | CMM operation, expected interface, error codes, do you have the trace number? |
+| Vague ticket | Business intent, functional area, definition of "done", who has more details |
+
+**If the problem involves CMM and there are no artifacts**, ask specifically:
 - "¿Tenés el número de trace de la transacción que falla?"
 - "¿Podés pegar el request y response CMM (SOAP/XML) directamente acá?"
 - "¿Podés buscar el trace en tu trace viewer y pegar los request/response CMM directamente acá?"
 
-Esperar respuestas del usuario. Tras recibirlas, reevaluar.
+Wait for user responses. After receiving them, re-evaluate.
 
-→ Si alcanza → **Paso 4**.
-→ Si no alcanza → **Nivel 5**.
+→ If reached → **Step 4**.
+→ If not reached → **Level 5**.
 
-#### Nivel 5: Declarar bloqueo (Modo C)
+#### Level 5: Declare blockage (Mode C)
 
-Si tras todos los niveles no se alcanza el umbral mínimo → producir salida en **Modo C** y generar archivo markdown.
+If the minimum threshold is not reached after all levels → produce output in **Mode C** and generate markdown file.
 
-### Paso 4: Enriquecimiento complementario
+### Step 4: Complementary enrichment
 
-Una vez que el umbral mínimo se cumple, enriquecer con información adicional:
+Once the minimum threshold is met, enrich with additional information:
 
-- `jira_get_issue_development_info` — PRs, branches, commits asociados
-- `jira_get_issue_images` — mockups o capturas adjuntas
-- `jira_get_issue_dates` — historial de estados y transiciones
+- `jira_get_issue_development_info` — associated PRs, branches, commits
+- `jira_get_issue_images` — attached mockups or screenshots
+- `jira_get_issue_dates` — status history and transitions
 
-**Si el usuario pidió análisis extendido** ("con contexto de HU anteriores", "análisis funcional", "dependencias CMM"):
-- Ejecutar búsquedas del Nivel 1 si no se hicieron
-- Sintetizar antecedentes funcionales en tabla
-- Identificar dependencias externas (CMM, backend, contratos)
+**If the user requested extended analysis** ("con contexto de HU anteriores", "análisis funcional", "dependencias CMM"):
+- Execute Level 1 searches if not already done
+- Synthesize functional antecedents in a table
+- Identify external dependencies (CMM, backend, contracts)
 
-**Si modo TECNICO y no se inspeccionó código en Nivel 3:**
-- Localizar y leer archivos del feature afectado
-- Identificar: componentes, reducers, sagas, servicios API, validaciones
-- Buscar patrones similares en features existentes
+**If TECHNICAL mode and code was not inspected in Level 3:**
+- Locate and read files for the affected feature
+- Identify: components, reducers, sagas, API services, validations
+- Search for similar patterns in existing features
 
-### Paso 5: Validación final de confianza
+### Step 5: Final confidence validation
 
-Evaluar si se puede avanzar con confianza. **Condiciones de bloqueo** (si alguna aplica → Modo C):
+Evaluate whether to proceed with confidence. **Blocking conditions** (if any apply → Mode C):
 
-- No hay forma de reproducir el problema (faltan pasos, entorno o datos)
-- Múltiples flujos válidos y el ticket no identifica cuál
-- Falta respuesta esperada del backend o contrato de payload
-- Faltan logs o mensajes de error necesarios para localizar el fallo
-- Falta definición funcional o regla de negocio para elegir entre opciones válidas
-- Las respuestas del usuario siguen siendo ambiguas o contradictorias
+- No way to reproduce the problem (missing steps, environment, or data)
+- Multiple valid flows and the ticket does not identify which one
+- Missing expected backend response or payload contract
+- Missing logs or error messages needed to locate the failure
+- Missing functional definition or business rule to choose between valid options
+- User responses remain ambiguous or contradictory
 
-Si hay bloqueo → **Modo C**.
-Si hay confianza suficiente → **Paso 6**.
+If blocked → **Mode C**.
+If sufficient confidence → **Step 6**.
 
-### Paso 6: Producir propuesta y generar archivo markdown
+### Step 6: Produce proposal and generate markdown file
 
-Seleccionar el modo de salida apropiado según el modo de análisis (funcional/técnico) y generar tanto la respuesta como el archivo markdown.
+Select the appropriate output mode according to analysis mode (functional/technical) and generate both the response and the markdown file.
 
 ---
 
-## Modos de salida
+## Output modes
 
-### Modo A-Funcional: Análisis funcional (contexto suficiente, sin código)
+### Mode A-Functional: Functional analysis (sufficient context, no code)
 
 ```
 ## 1. Resumen de negocio
@@ -283,7 +289,7 @@ Seleccionar el modo de salida apropiado según el modo de análisis (funcional/t
 - Qué evidencia adicional obtener si aplica
 ```
 
-### Modo A-Técnico: Propuesta técnica (contexto suficiente, con código)
+### Mode A-Technical: Technical proposal (sufficient context, with code)
 
 ```
 ## 1. Resumen de negocio
@@ -324,7 +330,7 @@ Para cada enfoque:
 - Ejemplo commit: feat(scope): descripción en español
 ```
 
-### Modo B: Contexto faltante, preguntas primero
+### Mode B: Missing context, questions first
 
 ```
 ## Resumen del ticket
@@ -349,7 +355,7 @@ Para cada enfoque:
 - A quién consultar (PO, diseñador, QA, backend) si aplica
 ```
 
-### Modo C: Bloqueado tras investigación
+### Mode C: Blocked after investigation
 
 ```
 ## Resumen de lo investigado
@@ -385,9 +391,9 @@ Para dependencias externas usar formato:
 - Qué obtener y proveer antes de solicitar nuevo análisis
 ```
 
-### Modo D: Análisis funcional extendido + historial
+### Mode D: Extended functional analysis + history
 
-Usar cuando el usuario pide "con contexto de HU anteriores", "análisis funcional extendido", o "dependencias CMM".
+Use when the user asks for "con contexto de HU anteriores", "análisis funcional extendido", or "dependencias CMM".
 
 ```
 ## 1. Antecedentes funcionales relevantes
@@ -416,42 +422,46 @@ Usar cuando el usuario pide "con contexto de HU anteriores", "análisis funciona
 
 ---
 
-## Análisis de artefactos CMM
+## CMM artifact analysis
 
-Cuando el usuario pega artefactos CMM (SOAP/XML, JSON, logs), aplicar este análisis específico:
+When the user pastes CMM artifacts (SOAP/XML, JSON, logs), apply this specific analysis:
 
-### Request CMM
-- Identificar la operación invocada (nombre del servicio, método)
-- Listar campos enviados y sus valores
-- Detectar campos vacíos, nulos, o con formato sospechoso
-- Comparar contra la interfaz esperada si está disponible
+### CMM Request
+- Identify the invoked operation (service name, method)
+- List fields sent and their values
+- Detect empty, null, or suspicious-format fields
+- Compare against expected interface if available
 
-### Response CMM
-- Identificar si es éxito o error
-- Si error: extraer código CMM (`cmmCode`), mensaje (`cmmMsg`), detalle (`detail`), source
-- Analizar qué significa el error en contexto del flujo
-- Si éxito: verificar que los campos de respuesta sean coherentes con lo esperado
+### CMM Response
+- Identify if success or error
+- If error: extract CMM code (`cmmCode`), message (`cmmMsg`), detail (`detail`), source
+- Analyze what the error means in the flow context
+- If success: verify that response fields are coherent with expectations
 
-### Request + Response juntos
-- Trazar el flujo: qué se envió → qué se recibió → es coherente?
-- Identificar discrepancias entre lo enviado y la respuesta
-- Proponer causa probable del error o comportamiento inesperado
+### Request + Response together
+- Trace the flow: what was sent → what was received → is it coherent?
+- Identify discrepancies between sent and response
+- Propose probable cause of error or unexpected behavior
 
-### Interfaz/Contrato CMM
-- Mapear campos obligatorios vs opcionales
-- Identificar tipos de datos y restricciones
-- Comparar contra el request/response real si están disponibles
+### CMM Interface/Contract
+- Map required vs optional fields
+- Identify data types and constraints
+- Compare against actual request/response if available
 
 ---
 
-## Archivo de salida
+## Output file
 
-**Siempre se genera un archivo markdown** con el análisis completo, independientemente del modo.
+**A markdown file is always generated** with the full analysis, regardless of mode.
 
-**Ruta del archivo:**
-- Siempre → `~/Desktop/Análisis/<JIRA-KEY>-analisis.md` (NO generar archivos dentro del repositorio)
+### CRITICAL: Output location
 
-**Estructura del archivo:**
+**NEVER generate analysis files inside the project repository.** Analysis files would accumulate unnecessarily and clutter the application codebase. The output must **always** be written outside the repo.
+
+**Output path (mandatory):**
+- Always → `~/Desktop/Análisis/<JIRA-KEY>-analisis.md`
+
+**File structure:**
 
 ```markdown
 # Análisis: <JIRA-KEY> — <Summary del ticket>
@@ -477,31 +487,33 @@ Cuando el usuario pega artefactos CMM (SOAP/XML, JSON, logs), aplicar este anál
 - Artefactos del usuario: <qué proporcionó> (si aplica)
 ```
 
-Crear el directorio de salida si no existe antes de escribir el archivo.
+Create the output directory if it does not exist before writing the file.
 
 ---
 
-## Reglas
+## Rules
 
-1. **Funcional primero** — el default es análisis funcional. Solo ir a código si el usuario lo pide o el ticket es claramente de implementación.
-2. **Jamás inventar** — si el ticket es ambiguo o faltan requisitos, escalar por niveles. No inventar detalles.
-3. **Escalamiento antes que preguntas** — investigar Jira, Confluence (y código si aplica) ANTES de preguntar al usuario.
-4. **Artefactos del usuario son evidencia de primera clase** — logs, payloads, interfaces pegados en el chat tienen la misma validez que datos de Jira o código.
-5. **Pedir artefactos CMM proactivamente** — si el problema involucra servicios CMM y no hay evidencia técnica, preguntar por trace number o pedir que peguen request/response.
-6. **Etiquetar suposiciones** — toda suposición debe marcarse explícitamente como `[SUPOSICION]` o `[NO CONFIRMADO]`.
-7. **Archivo siempre** — generar el archivo markdown de salida en todos los casos, sin excepción.
-8. **Propuesta concisa** — 1-2 páginas salvo tickets muy complejos.
-9. **Terminología del proyecto** — usar nombres de features, servicios y flujos tal como aparecen en Jira, Confluence y el código.
-10. **Convenciones de código** (solo modo técnico) — branch naming `feature/JIRA-ID` o `fix/JIRA-ID`, commits en español.
+1. **Always respond in Spanish** — All analysis output, questions, proposals, and file content must be written in Spanish, regardless of Jira/Confluence/code language.
+2. **Functional first** — The default is functional analysis. Only go to code if the user asks or the ticket is clearly about implementation.
+3. **Never invent** — If the ticket is ambiguous or requirements are missing, escalate through levels. Do not invent details.
+4. **Escalation before questions** — Investigate Jira, Confluence (and code if applicable) BEFORE asking the user.
+5. **User artifacts are first-class evidence** — Logs, payloads, interfaces pasted in chat have the same validity as Jira data or code.
+6. **Request CMM artifacts proactively** — If the problem involves CMM services and there is no technical evidence, ask for trace number or for them to paste request/response.
+7. **Label assumptions** — Every assumption must be explicitly marked as `[SUPOSICION]` or `[NO CONFIRMADO]`.
+8. **Always generate file** — Generate the markdown output file in all cases, without exception.
+9. **Output outside repo only** — NEVER write analysis files inside the project repository. Always use `~/Desktop/Análisis/<JIRA-KEY>-analisis.md`. Analysis files do not belong in the app codebase.
+10. **Concise proposal** — 1-2 pages unless tickets are very complex.
+11. **Project terminology** — Use feature names, services, and flows as they appear in Jira, Confluence, and code.
+12. **Code conventions** (technical mode only) — Branch naming `feature/JIRA-ID` or `fix/JIRA-ID`, commits in Spanish.
 
-## Referencias opcionales (NO se leen por defecto)
+## Optional references (NOT read by default)
 
-Estos archivos pueden leerse manualmente si se necesita contexto adicional:
+These files may be read manually if additional context is needed:
 
-- `docs/ai/feature-map.md` — mapa de features y sus rutas
-- `docs/ai/context-index.json` — índice generado de contexto
-- `docs/ai/examples/*.md` — 4 ejemplos de análisis
-- `docs/ai/clarification-playbook.md` — playbook de preguntas (deprecado, integrado aquí)
-- `docs/ai/analysis-template.md` — template de análisis (deprecado, integrado aquí)
-- `docs/ai/history-heuristics.md` — heurísticas de búsqueda (deprecado, integrado aquí)
-- `docs/ai/external-evidence-model.md` — modelo de evidencia externa (deprecado, integrado aquí)
+- `docs/ai/feature-map.md` — feature map and routes
+- `docs/ai/context-index.json` — generated context index
+- `docs/ai/examples/*.md` — 4 analysis examples
+- `docs/ai/clarification-playbook.md` — question playbook (deprecated, integrated here)
+- `docs/ai/analysis-template.md` — analysis template (deprecated, integrated here)
+- `docs/ai/history-heuristics.md` — search heuristics (deprecated, integrated here)
+- `docs/ai/external-evidence-model.md` — external evidence model (deprecated, integrated here)
