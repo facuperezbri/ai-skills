@@ -16,6 +16,11 @@ npx skills add https://github.com/facuperezbri/ai-skills --skill jira-analyst-sk
 
 Pregunta en qué editores instalar → Claude Code, Cursor, o ambos.
 
+**Actualizar skills instaladas:**
+```bash
+npx skills update
+```
+
 ## Skills
 
 | Skill | Descripción | MCPs requeridos |
