@@ -4,8 +4,14 @@ Colección de skills para Claude Code y Cursor.
 
 ## Instalación
 
+**Todas las skills:**
 ```bash
-npx skills add facuperezbri/jira-analyst-skill
+npx skills add facuperezbri/ai-skills
+```
+
+**Una skill específica:**
+```bash
+npx skills add https://github.com/facuperezbri/ai-skills --skill jira-analyst-skill
 ```
 
 Pregunta en qué editores instalar → Claude Code, Cursor, o ambos.
