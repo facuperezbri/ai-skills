@@ -15,7 +15,7 @@ metadata:
 1. **Spanish always** — All output (analysis, questions, proposals, file content) must be in Spanish, regardless of source language.
 2. **Never invent; label assumptions** — If context is missing, escalate through levels. Every assumption must be marked `[SUPOSICION]` or `[NO CONFIRMADO]`.
 3. **User artifacts = evidence** — Logs, payloads, and interfaces pasted in chat are first-class evidence, equal to Jira or code data.
-4. **Always generate file outside repo** — Write `~/Desktop/Análisis/<JIRA-KEY>-analisis.md`. Never write inside the project repository.
+4. **MANDATORY: file always on Desktop** — Write `~/Desktop/Análisis/<JIRA-KEY>-analisis.md`. NEVER create files inside any project repository. FORBIDDEN paths: `docs/`, `docs/ai/`, relative paths, or any path within the current working directory. If in doubt, always use `~/Desktop/Análisis/`.
 5. **Concise** — 1-2 pages unless the ticket is very complex.
 6. **Project terminology** — Use feature names, services, and flows as they appear in Jira, Confluence, and code.
 7. **Code conventions** (technical mode only) — Branch: `feature/JIRA-ID` or `fix/JIRA-ID`; commits in Spanish.
@@ -244,7 +244,8 @@ Condición de bloqueo: <cuál aplica>
 
 ## Output File
 
-**Path (always):** `~/Desktop/Análisis/<JIRA-KEY>-analisis.md` — create directory if needed.
+**Path (always, mandatory):** `~/Desktop/Análisis/<JIRA-KEY>-analisis.md` — create directory if needed.
+**NEVER use:** `docs/`, `docs/ai/`, `docs/ai/analysis/`, relative paths, or any path inside the current project.
 
 File structure:
 
